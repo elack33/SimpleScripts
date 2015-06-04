@@ -12,7 +12,7 @@
 DECLARE @Store INT = ;
 
 --Create temp table to hold some data from multiple tables to make inserting easier
-CREATE TABLE #Temp (
+CREATE TABLE #AcctAdjustTemp (
 StoreID INT,
 CustomerID INT,
 HistoryType INT,
@@ -22,19 +22,19 @@ TotalAmount Money,
 Comment Nvarchar(50),
 );
 
---This starts populating data into the #temp with amounts from the AcctReceive Table and the AcctBalance from Customer
-INSERT INTO #Temp (AcctRecAmount, AcctBal, CustomerID)
+--This starts populating data into the #AcctAdjustTemp with amounts from the AcctReceive Table and the AcctBalance from Customer
+INSERT INTO #AcctAdjustTemp (AcctRecAmount, AcctBal, CustomerID)
 	SELECT SUM(AR.OriginalAmount) AS SUMOrAmt, C.AccountBalance AS ActBal, C.ID 
 	FROM AccountReceivable AS AR
 		RIGHT OUTER JOIN Customer AS C
 			ON C.ID = AR.CustomerID
 	GROUP BY C.ID, C.AccountBalance
 
---This updates the #temp with a valid total that cancels out any previous Account Receivable Balances
+--This updates the #AcctAdjustTemp with a valid total that cancels out any previous Account Receivable Balances
 --Because the insert into the GlobalAccountAdjustment table makes it a negative amount, these may look backwards
 --The idea is that positive account balances are going to be imported into the customer table, they need to be credits in 
 --the AccountInformation 
-UPDATE #Temp 
+UPDATE #AcctAdjustTemp 
 SET TotalAmount =
 	CASE
 		WHEN AcctRecAmount = 0 AND AcctBal = 0 THEN 0								
@@ -49,14 +49,14 @@ SET TotalAmount =
 	END
 
 --Update the temp table with the store id from above, and a standard comment and history type
-UPDATE #Temp --(StoreID, HistoryType, Comment)
+UPDATE #AcctAdjustTemp --(StoreID, HistoryType, Comment)
 SET StoreID = @Store, 
 	HistoryType = 6,
-	Comment = 'AcctBal Adjusted from NWT'
+	Comment = 'AcctBal Adjusted'
 
 --Create WS350 to be processed by the chosen store with specific title and comment info
 INSERT INTO Worksheet (Style, Status, Notes, Title)
-VALUES (350, 2, 'Created by NWT Balance Adjustment', 'NWT Download Global Account Adjustments')
+VALUES (350, 2, 'Created by Balance Adjustment', 'Download Global Account Adjustments')
 
 --Insert Store ID chosen above into Worksheetstore table so that correct store processes WS
 INSERT INTO WorksheetStore (WorksheetID, Status, StoreID)
@@ -64,7 +64,7 @@ SELECT TOP 1 ID, 0, @Store FROM Worksheet WHERE style = 350 AND Status = 2 ORDER
 
 --Create WS401 to be processed by the chosen store with specific title and comment info
 INSERT INTO Worksheet (Style, Status, Notes, Title)
-VALUES (401, 2, 'NWT 401 Redo for Balance Adjustment', 'NWT Request Data Upload')
+VALUES (401, 2, '401 for Balance Adjustment', 'Request Data Upload')
 
 --Insert Store ID chosen above into Worksheetstore table so that correct store processes WS
 INSERT INTO WorksheetStore (WorksheetID, Status, StoreID)
@@ -75,7 +75,7 @@ INSERT INTO Worksheet_GlobalAccountAdjustment
 	(WorksheetID, StoreID, CustomerID, HistoryType, Amount, Comment)
 SELECT 
 (SELECT TOP 1 ID FROM Worksheet WHERE style = 350 AND Status = 2 ORDER BY ID Desc), 
-	StoreID, CustomerID, HistoryType, TotalAmount, Comment FROM #Temp
+	StoreID, CustomerID, HistoryType, TotalAmount, Comment FROM #AcctAdjustTemp
 
 --Cleanup
-DROP TABLE #temp
+DROP TABLE #AcctAdjustTemp
