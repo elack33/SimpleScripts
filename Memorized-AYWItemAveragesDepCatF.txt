@@ -1,0 +1,334 @@
+//--- Report Summary --- //
+
+Begin ReportSummary
+   ReportType = reporttypeSales
+   ReportTitle = "Item Averages(Dep & Cat)"
+   PageOrientation = pageorientationLandscape
+   WordWrap = False
+   ShowDateTimePicker = False
+   OutLineMode = True
+   Groups = 1
+   GroupDescription = ""
+   DisplayLogo = True
+   LogoFileName = "MyLogo.bmp"
+   ProcedureCall = ""
+   PreQuery1 = <BEGIN>
+         IF EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'VIEWItemSales') DROP TABLE VIEWItemSales
+         IF EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'VIEWItemQty') DROP TABLE VIEWItemQty
+         <END>
+   PreQuery2 = <BEGIN>
+   
+   SELECT 
+   Store.ID AS StoreId,
+   Store.Name AS StoreName,
+   Department.Name AS DepartmentName, 
+   Category.Name AS CategoryName, 
+   [Transaction].Time as DayofYear,
+   Item.ID AS ItemId,
+   Item.Description AS ItemDescription, 
+   Item.Itemlookupcode AS ItemLookUpCode, 
+   [TransactionEntry].Price as ItemPrice,
+   [TransactionEntry].Quantity as Quantity,
+   COUNT([TransactionEntry].TransactionNumber) AS NumTrnxs
+
+INTO VIEWItemSales
+
+FROM TransactionEntry 
+      INNER JOIN  [Transaction] WITH(NOLOCK) 
+                  ON TransactionEntry.TransactionNumber = [Transaction].TransactionNumber AND TransactionENtry.ItemType <> 9 AND TransactionEntry.StoreID = [Transaction].StoreID 
+      INNER JOIN  Batch WITH(NOLOCK) 
+                  ON [Transaction].BatchNumber = Batch.BatchNumber AND [Transaction].StoreID = Batch.StoreID
+      LEFT JOIN   Item WITH(NOLOCK) 
+                  ON TransactionEntry.ItemID = Item.ID 
+      LEFT JOIN   Department WITH(NOLOCK) 
+                  ON Item.DepartmentID = Department.ID 
+      LEFT JOIN   Category WITH(NOLOCK) 
+                  ON Item.CategoryID = Category.ID 
+      LEFT JOIN   Supplier WITH(NOLOCK) 
+                  ON Item.SupplierID = Supplier.ID 
+      LEFT JOIN   Store ON [Transaction].StoreID = Store.ID
+WHERE [Transaction].Time > '2013-01-01'
+GROUP BY Store.Name, Store.ID, Item.ID, Item.Itemlookupcode, Item.Description, Department.Name, Category.Name, [Transaction].Time, [TransactionEntry].Price, [TransactionEntry].Quantity
+
+   
+   <END>
+   TablesQueried = <BEGIN>
+   FROM VIEWItemSales 
+   LEFT JOIN Item ON VIEWItemSales.ItemID = Item.ID
+   LEFT JOIN Department WITH(NOLOCK) ON item.DepartmentID = Department.ID
+   LEFT JOIN Category WITH(NOLOCK) ON item.CategoryID = Category.id 
+   LEFT JOIN Store ON VIEWItemSales.StoreID = Store.ID
+
+<END>
+   SelCriteria = ""
+   GroupBy = "Store.Name, Store.ID, Department.Name, Category.Name, VIEWItemSales.DayOfYear, Item.Description, VIEWItemSales.ItemPrice, Item.Itemlookupcode, VIEWItemSales.Quantity, VIEWItemSales.NumTrnxs"
+   SortOrder = ""
+End ReportSummary
+
+
+//--- Title Rows ---//
+
+Begin TitleRow
+   Text = "<Store Name>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 16
+   Color = "Blue"
+End TitleRow
+
+Begin TitleRow
+   Text = "<Report Title>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 12
+   Color = "Black"
+End TitleRow
+
+Begin TitleRow
+   Text = "Generated On <Report Date>"
+   Font = "Arial"
+   FontBold = True
+   FontSize = 10
+   Color = "Black"
+End TitleRow
+
+
+//--- Filters ---//
+
+Begin Filter
+   FieldName = "VIEWItemSales.DayOfYear"
+   FilterOp = reportfilteropBetween
+   FilterLoLim = "1/01/2015"
+   FilterHilim = "1/30/2015"
+   FilterNegated = False
+   FilterConnector = reportfilterbooleanconAND
+End Filter
+
+//--- Columns ---//
+
+
+Begin Column
+   FieldName = "Store.Name"
+   DrillDownFieldName = "Store.Name"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Store Name"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1395
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+
+Begin Column
+   FieldName = "Store.ID"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Store ID"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = True
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1395
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Department.Name"
+   DrillDownFieldName = "Department.Name"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Department"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1785
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Category.Name"
+   DrillDownFieldName = "Category.Name"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Category"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 930
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+   ColAlignment = flexAlignLeftCenter
+End Column
+
+Begin Column
+   FieldName = "VIEWItemSales.DayOfYear"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Date"
+   VBDataType = vbDate
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 900
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.Description"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Description"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1785
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Item.Itemlookupcode"
+   DrillDownFieldName = "Item.Itemlookupcode"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "ILC"
+   VBDataType = vbString
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 540
+   GroupMethod = groupmethodNone
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "VIEWItemSales.ItemPrice"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Sold Price"
+   VBDataType = vbCurrency
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1995
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "VIEWItemSales.Quantity"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Quantity Sold"
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1620
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "Average$$$"
+   DrillDownFieldName = "*****"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Average $"
+   VBDataType = vbCurrency
+   Formula = "(SUM(VIEWItemSales.ItemPrice))/NULLIF(SUM(VIEWItemSales.Quantity),0)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2355
+   GroupMethod = groupmethodAverage
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "VIEWItemSales.NumTrnxs"
+   DrillDownFieldName = "*****"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Number of Trans."
+   VBDataType = vbDouble
+   Formula = ""
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2355
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "TotalAvgSales"
+   DrillDownFieldName = "*****"
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Average $ per Trans."
+   VBDataType = vbCurrency
+   Formula = "(SUM(VIEWItemSales.ItemPrice * VIEWItemSales.Quantity))/NULLIF(SUM(VIEWItemSales.NumTrnxs),0)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2355
+   GroupMethod = groupmethodAverage
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "TotalAvgItems"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Average Qty per Trans."
+   VBDataType = vbDouble
+   Formula = "(SUM(VIEWItemSales.Quantity))/NULLIF(SUM(VIEWItemSales.NumTrnxs),0)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 2355
+   GroupMethod = groupmethodAverage
+   ColFormat = ""
+End Column
+
+Begin Column
+   FieldName = "TotalSold"
+   DrillDownFieldName = ""
+   DrillDownReportName = ""
+   StoreIDFieldName = ""
+   Title = "Total Sales"
+   VBDataType = vbCurrency
+   Formula = "SUM(VIEWItemSales.ItemPrice * VIEWItemSales.Quantity)"
+   ColHidden = False
+   ColNotDisplayable = False
+   FilterDisabled = False
+   ColWidth = 1500
+   GroupMethod = groupmethodSum
+   ColFormat = ""
+End Column
