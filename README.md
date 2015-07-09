@@ -1,4 +1,5 @@
 # SimpleScripts
-Simple Scripts I created for work.
+SQL and Batch Scripts for work.
 
-Made these as learning projects or because it was useful instead of just repeating the same commands over and over!
+This started as little scripts that were useful, and processes that I was doing over and over again, that I made into scripts to automate the process. 
+As my skill grew, I started taking on scoped projects and other SQL/Data Analysis opportunities.
